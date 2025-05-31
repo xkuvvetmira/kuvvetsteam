@@ -1,2 +1,1 @@
-https://kvtsteamapi1.pythonanywhere.com/verify?key=1
-11
+
