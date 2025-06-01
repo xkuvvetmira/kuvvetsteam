@@ -1,1 +1,1 @@
-verify
+MessageBox.Show("Selam", "Bağlantı Hatası");
