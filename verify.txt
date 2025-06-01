@@ -1,1 +1,3 @@
-MessageBox.Show("Selam", "Bağlantı Hatası");
+using System.Windows.Forms;
+
+MessageBox.Show("Uzaktan kod başarıyla çalıştı!", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
