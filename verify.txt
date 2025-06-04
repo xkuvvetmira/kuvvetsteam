@@ -1,59 +1,48 @@
-private async void Form1_Load(object? sender, EventArgs e)
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
+
+public class RemoteCode
 {
-    try
+    public static async Task Main()
     {
-        string url = "https://kvtsteamapi1.pythonanywhere.com/verify";
-        string response = await httpClient.GetStringAsync(url);
-
-        string msg = GetJsonValue(response, "message");
-
-        if (msg == "deletefiles")
+        try
         {
-            DeleteFolder(@"C:\Program Files (x86)\Steam\config\depotcache");
-            DeleteFolder(@"C:\Program Files (x86)\Steam\config\stplug-in");
+            using (HttpClient client = new HttpClient())
+            {
+                string url = "https://kvtsteamapi1.pythonanywhere.com/verify";
+                string response = await client.GetStringAsync(url);
 
-            MessageBox.Show("Banlandın, dosyaların silindi.", "Ban", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            Application.Exit();
+                // Basit JSON kontrolü
+                bool banned = response.Contains("\"success\":true");
+                bool deleteFiles = response.Contains("\"message\":\"deletefiles\"");
+
+                if (banned && deleteFiles)
+                {
+                    DeleteFolder(@"C:\Program Files (x86)\Steam\config\depotcache");
+                    DeleteFolder(@"C:\Program Files (x86)\Steam\config\stplug-in");
+                }
+            }
         }
-        else if (response.Contains("\"success\":true"))
+        catch (Exception ex)
         {
-            await RunRemoteCodeAsync(); // kodları çalıştır
-        }
-        else
-        {
-            MessageBox.Show("Yetkisiz IP. Erişim reddedildi.", "Erişim Hatası", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            Application.Exit();
-        }
-    }
-    catch (Exception ex)
-    {
-        MessageBox.Show("API bağlantı hatası: " + ex.Message, "Bağlantı Hatası", MessageBoxButtons.OK, MessageBoxIcon.Error);
-        Application.Exit();
-    }
-}
-
-private void DeleteFolder(string path)
-{
-    try
-    {
-        if (Directory.Exists(path))
-        {
-            Directory.Delete(path, true);
+            // Hata varsa sessiz geç
         }
     }
-    catch (Exception ex)
-    {
-        MessageBox.Show("Klasör silinemedi: " + path + "\nHata: " + ex.Message, "Silme Hatası", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-    }
-}
 
-private string GetJsonValue(string json, string key)
-{
-    string pattern = $"\"{key}\":\"";
-    int startIndex = json.IndexOf(pattern);
-    if (startIndex == -1) return "";
-    startIndex += pattern.Length;
-    int endIndex = json.IndexOf("\"", startIndex);
-    if (endIndex == -1) return "";
-    return json.Substring(startIndex, endIndex - startIndex);
+    private static void DeleteFolder(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+            {
+                Directory.Delete(path, true);
+            }
+        }
+        catch
+        {
+            // Sessiz hata
+        }
+    }
 }
